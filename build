@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+NVIM_BRANCH=release-0.10
+NVIM_VERSION=$(./neovim/build/bin/nvim --version | grep NVIM | cut -d' ' -f2)
+BOB_ROOT=$HOME/.local/share/bob
+BUILD_TARGET=("fedora")
+
+clean() {
+	cd ./neovim || exit
+	make distclean
+	rm -rf build
+	cd ..
+}
+
+install_for_bob() {
+	mkdir -p "$1"/"$2"
+	cp -R ./dist/nvim-linux64 "$1"/"$2"/
+	pushd .
+	cd "$BOB_ROOT" || exit
+	ln -s "$NVIM_VERSION" $(echo "$NVIM_VERSION" | cut -d'-' -f1)
+	popd || exit
+}
+
+mkdir -p dist
+git clone -b $NVIM_BRANCH https://github.com/neovim/neovim.git neovim
+for target in ${BUILD_TARGET[0]}; do
+	if [ "$target" = "rhel" ]; then
+		podman build --cap-add SYS_ADMIN --device /dev/fuse --force-rm --volume "${PWD}"/dist:/dist --volume "${PWD}"/neovim:/neovim -f ./Dockerfile.rhel
+		cp ./neovim/build/bin/nvim.appimage dist/
+	elif [ "$target" = "ubuntu" ]; then
+		podman build --force-rm --volume "${PWD}"/dist:/dist --volume "${PWD}"/neovim:/neovim -f ./Dockerfile.ubuntu
+		install_for_bob "$BOB_ROOT" "$NVIM_VERSION"
+	elif [ "$target" = "fedora" ]; then
+		podman build --force-rm --volume "${PWD}"/dist:/dist --volume "${PWD}"/neovim:/neovim -f ./Dockerfile.fedora
+		install_for_bob "$BOB_ROOT" "$NVIM_VERSION"
+	fi
+	clean
+done

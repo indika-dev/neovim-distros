@@ -1,0 +1,7 @@
+FROM fedora:40 as builder
+
+WORKDIR /neovim
+RUN dnf -y update
+RUN dnf -y install ninja-build cmake gcc make unzip gettext curl glibc-gconv-extra git fuse-devel file
+RUN make CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=/dist/nvim-linux64"
+RUN make install
