@@ -1,4 +1,4 @@
-FROM fedora:40 as builder
+FROM fedora:40
 
 WORKDIR /neovim
 RUN dnf -y update

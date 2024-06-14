@@ -12,26 +12,27 @@ clean() {
 }
 
 install_for_bob() {
-	mkdir -p "$1"/"$2"
-	cp -R ./dist/nvim-linux64 "$1"/"$2"/
-	NVIM_VERSION=$(./neovim/build/bin/nvim --version | grep NVIM | cut -d' ' -f2)
-	pushd .
+	NVIM_VERSION=$(./dist/nvim-linux64/bin/nvim --version | grep NVIM | cut -d' ' -f2)
+	mkdir -p "$1"/"$NVIM_VERSION"
+	cp -R ./dist/nvim-linux64 "$1"/"$NVIM_VERSION"/
+	pushd . >/dev/null
 	cd "$BOB_ROOT" || exit
 	ln -s "$NVIM_VERSION" $(echo "$NVIM_VERSION" | cut -d'-' -f1)
-	popd || exit
+	popd >/dev/null || exit
 }
 
 mkdir -p dist
+rm -rf ./dist/*
 git clone -b $NVIM_BRANCH https://github.com/neovim/neovim.git neovim
 for target in ${BUILD_TARGET[0]}; do
 	if [ "$target" = "rhel" ]; then
-		podman build --cap-add SYS_ADMIN --device /dev/fuse --force-rm --volume "${PWD}"/dist:/dist --volume "${PWD}"/neovim:/neovim -f ./Dockerfile.rhel
+		podman build --cap-add SYS_ADMIN --device /dev/fuse --force-rm --volume "${PWD}"/dist:/dist:Z,rw --volume "${PWD}"/neovim:/neovim:Z,rw -f ./Dockerfile.rhel
 		cp ./neovim/build/bin/nvim.appimage dist/
 	elif [ "$target" = "ubuntu" ]; then
-		podman build --force-rm --volume "${PWD}"/dist:/dist --volume "${PWD}"/neovim:/neovim -f ./Dockerfile.ubuntu
+		podman build --force-rm --volume "${PWD}"/dist:/dist:Z,rw --volume "${PWD}"/neovim:/neovim:Z,rw -f ./Dockerfile.ubuntu
 		install_for_bob "$BOB_ROOT"
 	elif [ "$target" = "fedora" ]; then
-		podman build --force-rm --volume "${PWD}"/dist:/dist --volume "${PWD}"/neovim:/neovim -f ./Dockerfile.fedora
+		podman build --force-rm --volume "${PWD}"/dist:/dist:Z,rw --volume "${PWD}"/neovim:/neovim:Z,rw -f ./Dockerfile.fedora
 		install_for_bob "$BOB_ROOT"
 	fi
 	clean
