@@ -23,7 +23,13 @@ install_for_bob() {
 
 mkdir -p dist
 rm -rf ./dist/*
-git clone -b $NVIM_BRANCH https://github.com/neovim/neovim.git neovim
+if [ -d ./neovim/ ]; then
+	cd ./neovim/ || exit
+	git pull
+	cd ..
+else
+	git clone -b $NVIM_BRANCH https://github.com/neovim/neovim.git neovim
+fi
 for target in ${BUILD_TARGET[0]}; do
 	if [ "$target" = "rhel" ]; then
 		podman build --cap-add SYS_ADMIN --device /dev/fuse --force-rm --volume "${PWD}"/dist:/dist:Z,rw --volume "${PWD}"/neovim:/neovim:Z,rw -f ./Dockerfile.rhel
