@@ -3,6 +3,13 @@
 NVIM_BRANCH=release-0.10
 BOB_ROOT=$HOME/.local/share/bob
 BUILD_TARGET=("fedora")
+RELEASE=true
+UNLINK_PREVIOUS_INSTALL=false
+
+if [ $RELEASE = false ] && [ $UNLINK_PREVIOUS_INSTALL = false ]; then
+	UNLINK_PREVIOUS_INSTALL=true
+	echo building a development version ... previous install will be unlinked
+fi
 
 clean() {
 	cd ./neovim || exit
@@ -13,22 +20,43 @@ clean() {
 
 install_for_bob() {
 	NVIM_VERSION=$(./dist/nvim-linux64/bin/nvim --version | grep NVIM | cut -d' ' -f2)
+	pushd . >/dev/null
+	cd "$1" || exit
+	rm -rf "$NVIM_VERSION"
+	popd >/dev/null || exit
 	mkdir -p "$1"/"$NVIM_VERSION"
 	cp -R ./dist/nvim-linux64 "$1"/"$NVIM_VERSION"/
 	pushd . >/dev/null
-	cd "$BOB_ROOT" || exit
-	ln -s "$NVIM_VERSION" $(echo "$NVIM_VERSION" | cut -d'-' -f1)
+	cd "$1" || exit
+	SOFTLINK=$(echo "$NVIM_VERSION" | cut -d'-' -f1)
+	if [ $UNLINK_PREVIOUS_INSTALL = true ]; then
+		rm -f "$SOFTLINK"
+	fi
+	if [ ! -d "$SOFTLINK" ]; then
+		ln -s "$NVIM_VERSION" "$SOFTLINK"
+	fi
 	popd >/dev/null || exit
+	echo
+	echo installed "$NVIM_VERSION" to "$1"/"$NVIM_VERSION" and is usable as "$SOFTLINK" in bob
+	echo
 }
 
 mkdir -p dist
 rm -rf ./dist/*
-if [ -d ./neovim/ ]; then
+if
+	[ -d ./neovim/ ] &&
+		[ $RELEASE = false ]
+then
 	cd ./neovim/ || exit
 	git pull
 	cd ..
-else
+elif [ ! -d ./neovim/ ]; then
 	git clone -b $NVIM_BRANCH https://github.com/neovim/neovim.git neovim
+fi
+if [ $RELEASE = true ]; then
+	cd ./neovim/ || exit
+	git checkout stable
+	cd ..
 fi
 for target in ${BUILD_TARGET[0]}; do
 	if [ "$target" = "rhel" ]; then
