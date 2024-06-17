@@ -2,7 +2,7 @@
 
 NVIM_BRANCH=release-0.10
 BOB_ROOT=$HOME/.local/share/bob
-BUILD_TARGET=("fedora")
+BUILD_TARGET=("ubuntu")
 RELEASE=true
 UNLINK_PREVIOUS_INSTALL=false
 
@@ -70,4 +70,5 @@ for target in ${BUILD_TARGET[0]}; do
 		install_for_bob "$BOB_ROOT"
 	fi
 	clean
+	podman image prune -f
 done
