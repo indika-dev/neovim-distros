@@ -3,4 +3,10 @@ FROM redhat/ubi8
 WORKDIR /neovim
 RUN dnf -y update
 RUN dnf -y install ninja-build cmake gcc make unzip gettext curl glibc-gconv-extra git fuse-devel file
+RUN make CMAKE_BUILD_TYPE=Release
+RUN mkdir -p ./build/nvim.AppDir/usr/bin
+RUN tar xvzf fzf.tgz -C ./build/nvim.AppDir/usr/bin
+RUN tar xvzf fd.tgz fd-v10.1.0-x86_64-unknown-linux-musl/fd -C ./build/nvim.AppDir/usr/bin --strip-components=1 
+RUN tar xvzf ripgrep.tgz ripgrep-14.1.0-x86_64-unknown-linux-musl/rg -C ./build/nvim.AppDir/usr/bin --strip-components=1 
+RUN mv fd rg ./build/nvim.AppDir/usr/bin
 RUN make appimage

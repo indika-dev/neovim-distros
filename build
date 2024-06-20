@@ -2,7 +2,7 @@
 
 NVIM_BRANCH=release-0.10
 BOB_ROOT=$HOME/.local/share/bob
-BUILD_TARGET=("ubuntu")
+BUILD_TARGET=("rhel")
 RELEASE=true
 UNLINK_PREVIOUS_INSTALL=false
 
@@ -60,6 +60,9 @@ if [ $RELEASE = true ]; then
 fi
 for target in ${BUILD_TARGET[0]}; do
 	if [ "$target" = "rhel" ]; then
+		curl -Lo ./neovim/fzf.tgz https://github.com/junegunn/fzf/releases/download/0.53.0/fzf-0.53.0-linux_amd64.tar.gz
+		curl -Lo ./neovim/fd.tgz https://github.com/sharkdp/fd/releases/download/v10.1.0/fd-v10.1.0-x86_64-unknown-linux-musl.tar.gz
+		curl -Lo ./neovim/ripgrep.tgz https://github.com/BurntSushi/ripgrep/releases/download/14.1.0/ripgrep-14.1.0-x86_64-unknown-linux-musl.tar.gz
 		podman build --cap-add SYS_ADMIN --device /dev/fuse --force-rm --volume "${PWD}"/dist:/dist:Z,rw --volume "${PWD}"/neovim:/neovim:Z,rw -f ./Dockerfile.rhel
 		cp ./neovim/build/bin/nvim.appimage dist/
 	elif [ "$target" = "ubuntu" ]; then
